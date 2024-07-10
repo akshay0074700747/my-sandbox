@@ -19,7 +19,7 @@ func ExecuteOnDocker(req model.CodeExecutionRequest) (string, error) {
 	}
 
 	filename := strings.Split(req.FileName, ".")[0]
-	tmpfile, err := os.CreateTemp("", fmt.Sprintf("%s_*.go", filename))
+	tmpfile, err := os.CreateTemp("", fmt.Sprintf("%s_*%s", filename,req.Extension))
 	if err != nil {
 		return "", err
 	}
@@ -36,11 +36,11 @@ func ExecuteOnDocker(req model.CodeExecutionRequest) (string, error) {
 	// Create a container
 	resp, err := cli.ContainerCreate(context.Background(),
 		&container.Config{
-			Image: "golang:alpine",
-			Cmd:   []string{"go", "run", "/code/main.go"},
+			Image: req.Container,
+			Cmd:   req.Command,
 		},
 		&container.HostConfig{
-			Binds: []string{fmt.Sprintf("%s:/code/main.go", tmpfile.Name())},
+			Binds: []string{fmt.Sprintf(req.Bind, tmpfile.Name())},
 		},
 		nil, nil, "")
 	if err != nil {
